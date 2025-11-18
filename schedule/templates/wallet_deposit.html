@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% block title %}Поповнення балансу{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Обёртка страницы пополнения */
+.deposit-page {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 15px;
+}
+
+/* Фон для этой страницы (перекрывает базовый) */
+body {
+  background: radial-gradient(circle at center, #000, #0b0b0b);
+  background-color: #0b0b0b;
+  color: #fff;
+  font-family: 'Poppins', sans-serif;
+  min-height: 100vh;
+  background-image: url('https://www.transparenttextures.com/patterns/dark-mosaic.png');
+}
+
+/* Контейнер пополнения */
+.deposit-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  background: rgba(20,20,20,0.92);
+  padding: 40px 50px;
+  border-radius: 18px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(19,184,63,0.25), 0 0 12px rgba(255,255,255,0.1);
+  backdrop-filter: blur(6px);
+}
+
+/* Заголовок */
+.deposit-container h1 {
+  color: #4aff9a;
+  margin-bottom: 25px;
+  text-shadow: 0 0 12px rgba(74,255,154,0.6);
+}
+
+/* Текст */
+.deposit-container p {
+  margin: 0 0 10px;
+}
+
+/* Кнопки сумм */
+.deposit-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+.deposit-btn-option {
+  background: rgba(19,184,63,0.8);
+  color: #fff;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(19,184,63,0.4);
+}
+.deposit-btn-option:hover {
+  background: #17e24c;
+  transform: scale(1.05);
+  box-shadow: 0 0 18px rgba(23,226,76,0.55);
+}
+
+/* Ссылка назад */
+a.back-link {
+  color: #FFD700;
+  display: inline-block;
+  margin-top: 30px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: 0.3s;
+}
+a.back-link:hover {
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255,215,0,0.6);
+}
+
+/* Сообщения */
+.messages {
+  list-style: none;
+  padding: 0;
+  margin: 15px 0 20px;
+  text-align: center;
+}
+.messages li {
+  margin: 6px 0;
+  padding: 10px 15px;
+  border-radius: 10px;
+  display: inline-block;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+.messages .success {
+  background: rgba(0,255,100,0.15);
+  color: #4aff9a;
+  border: 1px solid #4aff9a;
+}
+.messages .error {
+  background: rgba(255,50,50,0.15);
+  color: #ff6262;
+  border: 1px solid #ff6262;
+}
+
+/* 📱 АДАПТИВ */
+
+/* Телефоны */
+@media (max-width: 600px) {
+  .deposit-page {
+    padding: 20px 10px 30px 10px;
+    align-items: flex-start;
+  }
+
+  .deposit-container {
+    padding: 24px 16px;
+    border-radius: 14px;
+    box-shadow: 0 0 20px rgba(19,184,63,0.3);
+  }
+
+  .deposit-container h1 {
+    font-size: 1.8rem;
+    margin-bottom: 18px;
+  }
+
+  .deposit-btn-option {
+    padding: 10px 18px;
+    font-size: 0.95rem;
+  }
+}
+
+/* Планшеты */
+@media (min-width: 601px) and (max-width: 991px) {
+  .deposit-page {
+    padding: 30px 20px;
+  }
+
+  .deposit-container {
+    max-width: 520px;
+    padding: 32px 30px;
+  }
+}
+
+/* Десктопы */
+@media (min-width: 992px) {
+  .deposit-page {
+    padding-top: 60px;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="deposit-page">
+  <div class="deposit-container">
+    <h1>💳 Поповнення балансу</h1>
+
+    <p>Оберіть суму поповнення:</p>
+
+    {% if messages %}
+      <ul class="messages">
+        {% for msg in messages %}
+          <li class="{{ msg.tags }}">{{ msg }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <form method="POST">
+      {% csrf_token %}
+      <div class="deposit-options">
+        {% for sum in allowed %}
+          <button type="submit" name="amount" value="{{ sum }}" class="deposit-btn-option">
+            +{{ sum }}₴
+          </button>
+        {% endfor %}
+      </div>
+    </form>
+
+    <a href="{% url 'wallet' %}" class="back-link">← Назад до гаманця</a>
+  </div>
+</div>
+{% endblock %}

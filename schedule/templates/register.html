@@ -1,0 +1,194 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Реєстрація — Cinema</title>
+    <link rel="stylesheet" href="{% static 'schedule/style.css' %}">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0c0c0c;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            background-image: url('https://www.transparenttextures.com/patterns/dark-mosaic.png');
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(20, 20, 20, 0.95);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffcc00;
+            margin-bottom: 25px;
+            font-size: 28px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #ffcc00;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 6px;
+            background-color: #1e1e1e;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        select option {
+            background-color: #1e1e1e;
+            color: #fff;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #e50914;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.15s ease;
+            box-shadow: 0 0 10px rgba(229, 9, 20, 0.4);
+        }
+
+        button:hover {
+            background-color: #b00610;
+            transform: translateY(-1px);
+        }
+
+        p {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+
+        a {
+            color: #ffcc00;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .errorlist {
+            color: #ff4d4d;
+            list-style: none;
+            padding: 0;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        /* 📱 АДАПТИВ */
+        @media (max-width: 600px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .container {
+                padding: 24px 18px;
+            }
+
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+
+            button {
+                font-size: 15px;
+            }
+        }
+
+        @media (min-width: 360px) and (max-width: 430px) and (min-height: 650px) and (max-height: 920px) {
+            body {
+                padding: 28px 14px;
+            }
+            .container {
+                max-width: 380px;
+            }
+        }
+
+        @media (min-width: 601px) and (max-width: 991px) {
+            body {
+                padding: 50px 40px;
+            }
+            .container {
+                max-width: 460px;
+            }
+        }
+
+        @media (min-width: 992px) {
+            body {
+                padding: 60px 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Реєстрація</h1>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <label for="id_first_name">Ім’я</label>
+            {{ form.first_name }}
+
+            <label for="id_last_name">Прізвище</label>
+            {{ form.last_name }}
+
+            <label for="id_email">Email</label>
+            {{ form.email }}
+
+            <label for="id_password1">Пароль</label>
+            {{ form.password1 }}
+
+            <label for="id_password2">Підтвердження пароля</label>
+            {{ form.password2 }}
+
+            <label for="id_age">Вік</label>
+            {{ form.age }}
+
+            <label for="id_gender">Стать</label>
+            {{ form.gender }}
+
+            <button type="submit">Зареєструватися</button>
+        </form>
+
+        <p>Вже маєте акаунт? <a href="{% url 'login' %}">Увійти</a></p>
+    </div>
+</body>
+</html>

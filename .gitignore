@@ -1,0 +1,21 @@
+# Python
+*.pyc
+__pycache__/
+
+# Виртуальное окружение
+venv/
+.env
+.venv/
+
+# SQLite база
+db.sqlite3
+
+# Медиа-файлы (аватары, постеры, видео и т.п.)
+media/
+
+# Собранная статика (если используешь collectstatic)
+staticfiles/
+static_root/
+
+# VS Code
+.vscode/

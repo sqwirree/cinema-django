@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+{% block title %}Профіль {{ viewer.first_name }}{% endblock %}
+{% block content %}
+{% load static %}
+
+{% if can_edit %}
+  <div class="wallet-info">
+    <p>💰 Баланс: <strong>{{ viewer.wallet.balance }}₴</strong></p>
+    <a href="{% url 'wallet' %}" class="btn-wallet">Перейти в гаманець</a>
+  </div>
+{% endif %}
+
+<div class="profile-container">
+    <h1>🎟 Профіль {{ viewer.first_name }} {{ viewer.last_name }}</h1>
+
+    <div class="avatar-wrapper">
+        {% if viewer.user.avatar %}
+            <img src="{{ viewer.user.avatar.url }}" alt="Аватар" class="avatar-img" id="avatarPreview">
+        {% else %}
+            <img src="{{ MEDIA_URL }}profile_images/standart_avatar.png" alt="Стандартний аватар" class="avatar-img" id="avatarPreview">
+        {% endif %}
+
+        {% if can_edit %}
+        <form method="post" enctype="multipart/form-data" class="avatar-form" id="avatarForm">
+            {% csrf_token %}
+            <input type="file" name="avatar" id="avatarInput" accept="image/*" hidden>
+            <button type="button" class="avatar-btn" onclick="chooseAvatar()">📸 Оновити фото</button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% if not can_edit %}
+    <div class="friend-actions" style="margin: 15px 0;">
+        {% if friend_status == 'friends' %}
+            <span class="badge" style="background:#1f9d55;padding:8px 12px;border-radius:10px;">✅ Друг</span>
+        {% elif friend_status == 'outgoing' %}
+            <span class="badge" style="background:#e09f3e;padding:8px 12px;border-radius:10px;">⏳ Запит відправлено</span>
+        {% elif friend_status == 'incoming' %}
+            <a href="{% url 'friends' %}" class="avatar-btn" style="text-decoration:none;">📩 Відповісти на запит</a>
+        {% else %}
+            <form action="{% url 'send_friend_request' viewer.id %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button class="avatar-btn" type="submit">👥 Додати в друзі</button>
+            </form>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="info">
+        <p><strong>Email:</strong> {{ viewer.email }}</p>
+        <p><strong>Вік:</strong> {{ viewer.age|default:"—" }}</p>
+        <p><strong>Стать:</strong> {{ viewer.get_gender_display|default:"—" }}</p>
+    </div>
+
+    <div class="bookmarks">
+        <h2>🎞 Мої закладки</h2>
+        {% for bookmark in bookmarks %}
+            <div class="bookmark">
+                <p><strong>{{ bookmark.movie.title }}</strong> — 
+                <span class="status">{{ bookmark.get_status_display }}</span>
+                {% if bookmark.user_rating %}
+                    | ⭐ Ваша оцінка: {{ bookmark.user_rating }}/10
+                {% endif %}
+                </p>
+            </div>
+        {% empty %}
+            <p>Закладок поки немає.</p>
+        {% endfor %}
+    </div>
+
+    <div class="sessions">
+        <h2>🎬 Історія сеансів</h2>
+        {% for session in sessions %}
+            <div class="session">
+                <p><strong>{{ session.movie.title }}</strong> — {{ session.datetime|date:"Y-m-d H:i" }}</p>
+            </div>
+        {% empty %}
+            <p>Немає відвіданих сеансів.</p>
+        {% endfor %}
+    </div>
+
+    <div class="friends-mini">
+        <h2>👥 Друзі</h2>
+        {% if friends_list %}
+            <div class="friends-grid">
+                {% for f in friends_list %}
+                    <a href="{% url 'profile' f.id %}" class="friend-card">
+                        {% if f.avatar %}
+                            <img src="{{ f.avatar.url }}" alt="{{ f.first_name }}">
+                        {% else %}
+                            <img src="{{ MEDIA_URL }}profile_images/standart_avatar.png" alt="{{ f.first_name }}">
+                        {% endif %}
+                        <p>{{ f.first_name }} {{ f.last_name }}</p>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>У цього користувача поки немає друзів.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function chooseAvatar() {
+    document.getElementById('avatarInput').click();
+}
+document.getElementById('avatarInput')?.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('avatarPreview').src = e.target.result;
+        };
+        reader.readAsDataURL(this.files[0]);
+        document.getElementById('avatarForm').submit();
+    }
+});
+</script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+/* Базовий фон сторінки профілю */
+body {
+    font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #0c0c0c;
+    color: #fff;
+    margin: 0;
+    padding: 40px 20px;
+    background-image: url('https://www.transparenttextures.com/patterns/dark-mosaic.png');
+}
+
+/* 💰 Гаманець — фіксований блок */
+.wallet-info {
+    position: fixed;
+    top: 20px;
+    right: 25px;
+    background: rgba(25, 25, 25, 0.92);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    border-radius: 12px;
+    padding: 12px 20px;
+    z-index: 1000;
+    box-shadow: 0 0 15px rgba(229, 9, 20, 0.4);
+    color: #fff;
+    font-size: 0.95rem;
+    backdrop-filter: blur(6px);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.4s ease;
+    opacity: 0;
+    animation: fadeIn 0.8s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.wallet-info:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.wallet-info p {
+    margin: 0 0 6px;
+    color: #FFD700;
+    font-weight: 600;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.4);
+}
+
+.btn-wallet {
+    display: inline-block;
+    background: #e50914;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 0 10px rgba(229, 9, 20, 0.3);
+}
+.btn-wallet:hover {
+    background: #ff1a24;
+    transform: scale(1.05);
+}
+
+.profile-container {
+    margin: 50px auto;
+    background: rgba(20, 20, 20, 0.93);
+    padding: 40px;
+    max-width: 700px;
+    border-radius: 20px;
+    box-shadow: 0 4px 25px rgba(229, 9, 20, 0.25);
+    text-align: center;
+    position: relative;
+    animation: fadeIn 0.8s ease;
+}
+
+h1 {
+    color: #FFD700;
+    margin-bottom: 30px;
+    font-size: 2rem;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.avatar-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 25px;
+}
+
+.avatar-img {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 20px rgba(229, 9, 20, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.avatar-wrapper:hover .avatar-img {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(229, 9, 20, 0.45);
+}
+
+.avatar-btn {
+    background-color: #e50914;
+    border: none;
+    padding: 8px 18px;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.95rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 3px 10px rgba(229, 9, 20, 0.3);
+}
+.avatar-btn:hover { background-color: #ff1a24; transform: scale(1.05); }
+
+.info, .bookmarks, .sessions {
+    margin-top: 30px;
+    text-align: left;
+    background-color: rgba(30, 30, 30, 0.95);
+    padding: 20px;
+    border-radius: 10px;
+    line-height: 1.8;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
+}
+
+.bookmarks h2, .sessions h2 {
+    color: #FFD700;
+    margin-bottom: 15px;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.bookmark, .session {
+    background-color: rgba(28, 28, 28, 0.95);
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin: 10px auto;
+    max-width: 500px;
+    box-shadow: 0 3px 10px rgba(229, 9, 20, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.bookmark:hover, .session:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(229, 9, 20, 0.35);
+}
+.status { color: #FFD700; font-weight: bold; }
+
+.friends-mini {
+    margin-top: 40px;
+    background: rgba(30, 30, 30, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
+    text-align: center;
+}
+
+.friends-mini h2 {
+    color: #FFD700;
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.friends-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.friend-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    background: transparent;
+    border-radius: 10px;
+    padding: 5px;
+    width: 100px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.friend-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+.friend-card img {
+    width: 85px;
+    height: 85px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 10px rgba(229, 9, 20, 0.3);
+    transition: box-shadow 0.3s ease;
+}
+.friend-card:hover img {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+}
+.friend-card p {
+    margin: 8px 0 0;
+    font-size: 0.95rem;
+    color: #FFD700;
+    font-weight: 600;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.4);
+    transition: color 0.3s ease;
+}
+.friend-card:hover p { color: #fff; }
+
+/* ─────────────────────────
+   📱 АДАПТИВ
+   ───────────────────────── */
+
+/* Телефони до 600px */
+@media (max-width: 600px) {
+    body {
+        padding: 20px 10px;
+    }
+
+    .wallet-info {
+        top: 70px;
+        right: 10px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+
+    .profile-container {
+        margin: 40px auto 20px;
+        padding: 24px 16px;
+        max-width: 100%;
+    }
+
+    h1 {
+        font-size: 1.6rem;
+        margin-bottom: 20px;
+    }
+
+    .avatar-img {
+        width: 130px;
+        height: 130px;
+    }
+
+    .info, .bookmarks, .sessions, .friends-mini {
+        padding: 16px;
+    }
+
+    .bookmark, .session {
+        max-width: 100%;
+    }
+
+    .friends-grid {
+        gap: 14px;
+    }
+
+    .friend-card {
+        width: 90px;
+    }
+
+    .friend-card img {
+        width: 70px;
+        height: 70px;
+    }
+
+    .friend-card p {
+        font-size: 0.85rem;
+    }
+}
+
+/* Узкі й високі телефони (375–420 ширина, 650–920 висота) */
+@media (min-width: 360px) and (max-width: 430px) and (min-height: 650px) and (max-height: 920px) {
+    body {
+        padding: 24px 12px;
+    }
+
+    .profile-container {
+        margin: 50px auto 24px;
+    }
+
+    .wallet-info {
+        top: 78px;
+    }
+}
+
+/* Планшети */
+@media (min-width: 601px) and (max-width: 991px) {
+    body {
+        padding: 30px 18px;
+    }
+
+    .profile-container {
+        max-width: 90%;
+        padding: 32px;
+    }
+}
+
+/* Десктопи */
+@media (min-width: 992px) {
+    body {
+        padding: 40px 20px;
+    }
+}
+</style>
+{% endblock %}

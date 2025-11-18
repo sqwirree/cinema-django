@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+{% block title %}Вибір місць{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Страница выбора мест */
+.seat-page {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 10px 40px 10px;
+}
+
+/* Перекрываем некоторые базовые стили под эту страницу */
+body {
+  text-align: center;
+  /* ВАЖНО: не прячем горизонтальный скролл */
+  overflow-x: visible;
+}
+
+/* Заголовок */
+.seat-title {
+  margin: 20px 0 16px;
+  color: #ffcc00;
+  font-size: 2rem;
+}
+
+/* Екран */
+.screen {
+  background: linear-gradient(to bottom, #ccc, #999);
+  height: 40px;
+  width: 80%;
+  max-width: 700px;
+  margin: 0 auto 50px;
+  border-radius: 0 0 100% 100%;
+  box-shadow: 0 5px 15px rgba(255, 255, 255, 0.2);
+}
+
+/* Обёртка зала — даём горизонтальный скролл при необходимости */
+.hall-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+/* Зал */
+.hall {
+  display: inline-block;
+  padding: 20px 30px;
+  background: rgba(20, 20, 20, 0.95);
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+  position: relative; /* база для координат людей */
+}
+
+/* Обертка ряда с подписью */
+.row-wrapper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+/* Подпись ряда */
+.row-label {
+  width: 60px;
+  text-align: right;
+  margin-right: 12px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.35);
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Ряд кресел */
+.row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+/* Кресло */
+.seat {
+  width: 28px;
+  height: 28px;
+  margin: 10px 6px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  position: relative;
+}
+
+/* Вільне / зайняте */
+.free {
+  background-color: #1e1e1e;
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+}
+.reserved {
+  background-color: #444;
+  cursor: not-allowed;
+}
+
+/* Человечки-шарики */
+.person {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ffffff, #ffcc00 45%, #ff6600 100%);
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.9);
+  pointer-events: none;
+  opacity: 0.9;
+  left: 0;  /* (0,0) = верхний левый угол .hall */
+  top: 0;
+}
+
+/* ───────────── 📱 АДАПТИВ ───────────── */
+
+/* Телефоны */
+@media (max-width: 600px) {
+  .seat-page {
+    padding: 10px 6px 30px 6px;
+  }
+
+  .seat-title {
+    font-size: 1.6rem;
+    margin: 16px 0 12px;
+  }
+
+  .screen {
+    width: 90%;
+    margin-bottom: 30px;
+    height: 32px;
+  }
+
+  .hall-wrapper {
+    /* чуть меньше боковые паддинги, чтобы зал влезал */
+    padding-bottom: 8px;
+  }
+
+  .hall {
+    padding: 14px 10px;
+  }
+
+  .row-wrapper {
+    margin-bottom: 6px;
+  }
+
+  .row-label {
+    width: 48px;
+    margin-right: 6px;
+    font-size: 12px;
+  }
+
+  .seat {
+    width: 22px;
+    height: 22px;
+    margin: 6px 4px;
+    font-size: 10px;
+  }
+
+  .person {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* Планшеты */
+@media (min-width: 601px) and (max-width: 991px) {
+  .seat-page {
+    padding: 20px 10px 35px;
+  }
+
+  .screen {
+    width: 85%;
+    margin-bottom: 40px;
+  }
+
+  .hall {
+    padding: 18px 18px;
+  }
+}
+
+/* Десктопы */
+@media (min-width: 992px) {
+  .seat-page {
+    padding-top: 30px;
+  }
+
+  .hall {
+    padding: 22px 32px;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="seat-page">
+  <h1 class="seat-title">Вибір місць на "{{ session.movie.title }}"</h1>
+
+  <div class="screen"></div>
+
+  <div class="hall-wrapper">
+    <div class="hall" id="hall">
+      {% for row in seat_rows %}
+        <div class="row-wrapper">
+          <div class="row-label">Ряд {{ forloop.counter }}</div>
+          <div class="row">
+            {% for seat in row %}
+              {% if seat.is_reserved %}
+                <a href="{% url 'profile' seat.viewer.id %}" class="seat reserved" title="Зайнято">
+                  {{ seat.column }}
+                </a>
+              {% else %}
+                <a href="{% url 'confirm_ticket' seat.id %}" class="seat free" title="Вільно">
+                  {{ seat.column }}
+                </a>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script>
+  // Анимация людей: появляются в одной точке -> заходят в зал -> идут -> сидят -> уходят тем же путём -> исчезают
+  document.addEventListener('DOMContentLoaded', function () {
+    const hall = document.getElementById('hall');
+    if (!hall) return;
+
+    const hallRect = hall.getBoundingClientRect();
+    const reservedSeats = hall.querySelectorAll('.seat.reserved');
+
+    // ОДНА общая дверь для всех
+    const entranceXOutside = hallRect.width + 40;   // за пределами зала
+    const entranceXInside  = hallRect.width - 10;   // внутри зала, у двери
+    const entranceY        = hallRect.height * 0.5; // середина по высоте
+
+    function runCycle(seat) {
+      const seatRect = seat.getBoundingClientRect();
+
+      const seatX = seatRect.left - hallRect.left - 8 + seatRect.width / 2;
+      const seatY = seatRect.top  - hallRect.top  - 8 + seatRect.height / 2;
+
+      const midY = seatY - 35; // проход над рядом
+
+      const totalDuration = 7000 + Math.random() * 5000; // 7–12 сек
+
+      // Ключевые моменты по времени
+      const oEnterStepX   = 0.08; // из-за стены в зал
+      const oDownToRow    = 0.22; // вниз к уровню ряда
+      const oAlongRow     = 0.38; // по ряду к месту
+      const oSitDown      = 0.48; // сел
+      const oSitHold      = 0.68; // посидел
+      const oUpFromSeat   = 0.80; // вверх к проходу (seatX, midY)
+      const oBackAlongRow = 0.92; // по ряду назад к двери (entranceXInside, midY)
+      const oUpToDoor     = 0.96; // вверх/вниз к уровню двери (entranceXInside, entranceY)
+      const oEnd          = 1.00; // выход за дверь (entranceXOutside, entranceY)
+
+      const person = document.createElement('div');
+      person.classList.add('person');
+      hall.appendChild(person);
+
+      const animation = person.animate(
+        [
+          { transform: `translate(${entranceXOutside}px, ${entranceY}px) scale(1)`, offset: 0 },
+          { transform: `translate(${entranceXInside}px, ${entranceY}px) scale(1)`, offset: oEnterStepX },
+          { transform: `translate(${entranceXInside}px, ${midY}px) scale(1)`, offset: oDownToRow },
+          { transform: `translate(${seatX}px, ${midY}px) scale(1)`, offset: oAlongRow },
+          { transform: `translate(${seatX}px, ${seatY}px) scale(1.1, 0.9)`, offset: oSitDown },
+          { transform: `translate(${seatX}px, ${seatY}px) scale(0.95, 1.05)`, offset: oSitHold },
+          { transform: `translate(${seatX}px, ${midY}px) scale(1)`, offset: oUpFromSeat },
+          { transform: `translate(${entranceXInside}px, ${midY}px) scale(1)`, offset: oBackAlongRow },
+          { transform: `translate(${entranceXInside}px, ${entranceY}px) scale(1)`, offset: oUpToDoor },
+          { transform: `translate(${entranceXOutside}px, ${entranceY}px) scale(1)`, offset: oEnd },
+        ],
+        {
+          duration: totalDuration,
+          iterations: 1,
+          easing: 'ease-in-out'
+        }
+      );
+
+      animation.onfinish = () => {
+        person.remove();
+        const pause = 1500 + Math.random() * 5000; // 1.5–6.5 сек до следующего
+        setTimeout(() => runCycle(seat), pause);
+      };
+    }
+
+    reservedSeats.forEach((seat) => {
+      const initialDelay = 500 + Math.random() * 4000;
+      setTimeout(() => runCycle(seat), initialDelay);
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Головна — Кінотеатр</title>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+/* 🌌 ФОН */
+body {
+  background: radial-gradient(circle at center, #000 0%, #0b0b0b 80%);
+  background-image: url('https://www.transparenttextures.com/patterns/dark-mosaic.png');
+  background-color: #0b0b0b;
+  color: #fff;
+  font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+  margin: 0;
+  padding: 40px 20px;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* 🔮 АНИМАЦИЯ ПЛАВАЮЩЕГО СИЯНИЯ */
+body::before {
+  content: "";
+  position: fixed;
+  top: -100px;
+  left: -100px;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 50% 50%, rgba(229,9,20,0.1), transparent 70%);
+  animation: floatLight 12s infinite alternate ease-in-out;
+  z-index: 0;
+  pointer-events: none;
+}
+@keyframes floatLight {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(10%, -10%) scale(1.1); }
+  100% { transform: translate(-5%, 10%) scale(1); }
+}
+
+/* 🎬 ГЛАВНЫЙ КОНТЕЙНЕР */
+.main-container {
+  position: relative;
+  max-width: 960px;
+  margin: 0 auto;
+  background: rgba(18, 18, 18, 0.85);
+  border-radius: 18px;
+  padding: 40px;
+  box-shadow:
+    0 0 25px rgba(255, 0, 0, 0.15),
+    inset 0 0 15px rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  transition: 0.5s ease;
+  z-index: 1;
+}
+.main-container:hover {
+  box-shadow:
+    0 0 40px rgba(229, 9, 20, 0.3),
+    inset 0 0 25px rgba(255, 255, 255, 0.05);
+}
+
+/* 🌟 НЕОНОВА НАДПИСЬ */
+h1 {
+  text-align: center;
+  font-size: 2.8rem;
+  margin-bottom: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #FFD700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-shadow:
+    0 0 6px #FFD700,
+    0 0 15px #E50914,
+    0 0 30px #E50914;
+  transform: rotate(-4deg); /* общий наклон */
+}
+h1 span {
+  display: inline-block;
+  margin: 0 1px;
+  transition: color 0.3s ease, text-shadow 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+}
+.tilt-left { transform: rotate(-8deg); }
+.tilt-right { transform: rotate(8deg); }
+.tilt-strong { transform: rotate(12deg); }
+.off {
+  color: #444 !important;
+  text-shadow: none !important;
+  filter: brightness(0.4);
+  opacity: 0.6;
+}
+@keyframes flicker-sequence {
+  0%, 5%, 10% { opacity: 1; filter: brightness(1); }
+  6%, 8%, 11% { opacity: 0.3; color: #888; text-shadow: none; }
+  12%, 13% { opacity: 0.1; }
+  14%, 100% { opacity: 1; filter: brightness(1.2); }
+}
+.flash {
+  animation: flicker-sequence 0.8s linear;
+}
+
+/* 🪩 ТЕКСТОВЫЕ БЛОКИ */
+p {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 40px;
+  font-size: 1.15rem;
+  color: #ccc;
+  line-height: 1.7;
+  letter-spacing: 0.3px;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.1);
+}
+
+/* ✨ ПОДЗАГОЛОВКИ */
+h2 {
+  text-align: center;
+  color: #FFD700;
+  letter-spacing: 1px;
+  margin-top: 45px;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  font-size: 1.6rem;
+  text-shadow:
+    0 0 6px #FFD700,
+    0 0 18px rgba(255, 215, 0, 0.4);
+  position: relative;
+}
+h2::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #FFD700, transparent);
+  margin: 12px auto 0;
+  border-radius: 2px;
+  opacity: 0.7;
+}
+
+/* 🎞 СПИСКИ РАЗДЕЛОВ */
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 25px auto;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+ul li {
+  background: rgba(26, 26, 26, 0.95);
+  padding: 14px 18px;
+  border-radius: 12px;
+  box-shadow:
+    0 0 12px rgba(255, 215, 0, 0.1),
+    inset 0 0 10px rgba(255, 255, 255, 0.02);
+  transition: all 0.35s ease;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+ul li:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow:
+    0 0 18px rgba(255, 215, 0, 0.25),
+    inset 0 0 12px rgba(255, 255, 255, 0.05);
+  background: rgba(28, 28, 28, 0.98);
+}
+
+/* 🔗 ССЫЛКИ */
+a {
+  text-decoration: none;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: 0.5px;
+  display: block;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+a:hover {
+  color: #FFD700;
+  text-shadow:
+    0 0 6px #FFD700,
+    0 0 20px rgba(255, 215, 0, 0.6);
+}
+
+/* 💫 ЛИНИЯ */
+hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    transparent
+  );
+  margin: 40px 0;
+  opacity: 0.6;
+}
+
+/* 🎞 ЭФФЕКТ НЕОНОВОГО МЕРЦАНИЯ ЭЛЕМЕНТОВ ПРИ НАВЕДЕНИИ */
+ul li:hover a {
+  animation: glowPulse 1.5s ease-in-out infinite alternate;
+}
+@keyframes glowPulse {
+  0% { text-shadow: 0 0 6px #FFD700; }
+  100% { text-shadow: 0 0 18px #E50914; }
+}
+
+/* 🧊 FOOTER */
+footer {
+  text-align: center;
+  margin-top: 50px;
+  font-size: 0.95rem;
+  color: #aaa;
+  text-shadow: 0 0 6px rgba(255,255,255,0.1);
+  transition: color 0.3s ease;
+}
+footer:hover {
+  color: #FFD700;
+  text-shadow: 0 0 10px rgba(255,215,0,0.5);
+}
+
+/* ─────────────────────────
+   📱 АДАПТИВ
+   ───────────────────────── */
+
+/* МАЛЕНЬКИЕ ЭКРАНЫ (телефоны) */
+@media (max-width: 600px) {
+  body {
+    padding: 20px 10px;
+  }
+
+  .main-container {
+    padding: 24px 14px;
+    border-radius: 14px;
+    max-width: 100%;
+  }
+
+  h1 {
+    font-size: 1.9rem;
+    transform: rotate(-2deg);
+  }
+  .tilt-left { transform: rotate(-4deg); }
+  .tilt-right { transform: rotate(4deg); }
+  .tilt-strong { transform: rotate(6deg); }
+
+  p {
+    font-size: 1rem;
+    margin-bottom: 28px;
+    padding: 0 4px;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+    margin-top: 32px;
+    margin-bottom: 16px;
+  }
+
+  ul {
+    max-width: 100%;
+    margin: 18px auto;
+    gap: 10px;
+  }
+
+  ul li {
+    padding: 12px 12px;
+  }
+
+  a {
+    font-size: 0.98rem;
+  }
+
+  hr {
+    margin: 28px 0;
+  }
+
+  footer {
+    margin-top: 30px;
+    font-size: 0.9rem;
+  }
+}
+
+/* ДОПОЛНИТЕЛЬНАЯ ПОДГОНКА ДЛЯ ВЫСОКИХ ТЕЛЕФОНОВ
+   (375–420 ширина, большая высота: 667–914) */
+@media (min-width: 360px) and (max-width: 430px) and (min-height: 650px) {
+  body {
+    padding: 18px 10px;
+  }
+
+  .main-container {
+    padding: 22px 12px;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+    letter-spacing: 1px;
+  }
+
+  p {
+    margin-bottom: 24px;
+  }
+
+  ul {
+    margin: 16px auto;
+  }
+}
+
+/* СРЕДНИЕ ЭКРАНЫ (планшеты) */
+@media (min-width: 601px) and (max-width: 991px) {
+  body {
+    padding: 30px 16px;
+  }
+
+  .main-container {
+    max-width: 90%;
+    padding: 32px 24px;
+  }
+
+  h1 {
+    font-size: 2.3rem;
+    transform: rotate(-3deg);
+  }
+
+  p {
+    font-size: 1.08rem;
+    margin-bottom: 34px;
+  }
+
+  ul {
+    max-width: 480px;
+  }
+}
+
+/* БОЛЬШИЕ ЭКРАНЫ (десктопы) */
+@media (min-width: 992px) {
+  body {
+    padding: 50px 24px;
+  }
+
+  .main-container {
+    max-width: 960px;
+    padding: 40px 40px;
+  }
+
+  h1 {
+    font-size: 3rem;
+  }
+}
+</style>
+</head>
+<body>
+<div class="main-container">
+  <h1 id="neonTitle">
+    <div class="line1">
+      <span class="tilt-left">Л</span><span>а</span><span>с</span><span class="tilt-right">к</span><span>а</span><span>в</span><span>о</span>
+      <span> </span><span class="tilt-strong">п</span><span>р</span><span>о</span><span>с</span><span>и</span><span>м</span><span>о</span>
+      <span> </span><span>д</span><span>о</span>
+      <span> </span><span>н</span><span>а</span><span>ш</span><span>о</span><span>г</span><span class="tilt-right">о</span>
+    </div>
+    <div class="line2">
+      <span class="tilt-left">к</span><span>і</span><span>н</span><span class="tilt-right">о</span><span>т</span><span>е</span><span>а</span><span class="tilt-strong">т</span><span>р</span><span>у</span><span>!</span>
+    </div>
+  </h1>
+
+  <p>
+    Вітаємо на головній сторінці нашого онлайн-кінотеатру!  
+    Тут ви можете переглядати фільми, бронювати місця, спілкуватися з друзями  
+    та насолоджуватися найкращими прем’єрами.
+  </p>
+
+  <h2>Основні розділи</h2>
+  <ul>
+    <li><a href="{% url 'movie_list' %}">🎞 Список фільмів</a></li>
+    <li><a href="{% url 'random_movie' %}">🎲 Випадковий фільм</a></li>
+    <li><a href="{% url 'friends' %}">🤝 Друзі та чат</a></li>
+    {% if user.is_authenticated %}
+    <li><a href="{% url 'profile' user.id %}">👤 Мій профіль</a></li>
+    {% endif %}
+  </ul>
+
+  <h2>Авторизація</h2>
+  <ul>
+    <li><a href="{% url 'login' %}">🔐 Увійти</a></li>
+    <li><a href="{% url 'register' %}">📝 Зареєструватися</a></li>
+    <li><a href="{% url 'logout' %}">🚪 Вийти</a></li>
+  </ul>
+
+  <hr>
+  <footer>
+    <p>© 2025 Онлайн-кінотеатр. Усі права захищено.</p>
+  </footer>
+</div>
+
+<script>
+/* 💡 Мигание і виключення */
+const spans = document.querySelectorAll('#neonTitle span');
+spans.forEach(span => {
+  setInterval(() => {
+    if (Math.random() < 0.05) {
+      span.classList.add('flash');
+      setTimeout(() => {
+        span.classList.remove('flash');
+        span.classList.add('off');
+      }, 900);
+      setTimeout(() => span.classList.remove('off'), 2000 + Math.random() * 2000);
+    }
+  }, 2000 + Math.random() * 2000);
+});
+</script>
+</body>
+</html>

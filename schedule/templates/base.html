@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Кінотеатр{% endblock %}</title>
+    <style>
+        :root {
+            --sidebar-width: 250px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0c0c0c;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            background-image: url('https://www.transparenttextures.com/patterns/dark-mosaic.png');
+            overflow-x: hidden;
+        }
+
+        /* БУРГЕР */
+        .burger {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 35px;
+            height: 25px;
+            cursor: pointer;
+            z-index: 1100;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: opacity 0.25s ease;
+        }
+        .burger div {
+            height: 4px;
+            background-color: #FFD700;
+            border-radius: 2px;
+        }
+        .burger.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* САЙДБАР */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: calc(-1 * var(--sidebar-width)); /* полностью скрыт */
+            width: var(--sidebar-width);
+            height: 100%;
+            background: rgba(20, 20, 20, 0.97);
+            box-shadow: 4px 0 15px rgba(0,0,0,0.6);
+            transition: left 0.3s ease;
+            padding-top: 60px;
+            z-index: 1200;
+        }
+        .sidebar.active {
+            left: 0;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 15px 25px;
+            color: #FFD700;
+            text-decoration: none;
+            font-size: 1.05rem;
+            transition: background 0.3s, color 0.3s;
+        }
+        .sidebar a:hover {
+            background: rgba(255, 215, 0, 0.2);
+            color: #fff;
+        }
+
+        /* КРЕСТИК */
+        .sidebar-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #FFD700;
+            font-size: 22px;
+            cursor: pointer;
+        }
+
+        /* ОВЕРЛЕЙ */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* КОНТЕНТ */
+        main {
+            padding: 60px 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* АДАПТИВ (оставляю как есть) */
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- БУРГЕР -->
+    <div class="burger" id="burger" onclick="toggleSidebar()">
+        <div></div><div></div><div></div>
+    </div>
+
+    <!-- САЙДБАР -->
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-close" onclick="toggleSidebar()">×</button>
+
+        <a href="{% url 'home' %}">🔴Головна</a>
+
+        {% if user.is_authenticated %}
+            <a href="{% url 'profile' user.id %}">👤 Профіль</a>
+        {% else %}
+            <a href="{% url 'login' %}">🔑 Увійти</a>
+        {% endif %}
+
+        <a href="{% url 'movie_list' %}">🎞 Каталог фільмів</a>
+        <a href="{% url 'random_movie' %}">🎲 Випадковий фільм</a>
+        <a href="{% url 'friends' %}">👥 Друзі</a>
+        <a href="{% url 'wallet' %}">👛 Перейти в гаманець</a>
+
+        {% if user.is_authenticated %}
+            <a href="{% url 'logout' %}">🚪 Вийти</a>
+        {% endif %}
+    </div>
+
+    <!-- ОВЕРЛЕЙ -->
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            const overlay = document.getElementById("overlay");
+            const burger = document.getElementById("burger");
+
+            sidebar.classList.toggle("active");
+            overlay.classList.toggle("active");
+
+            if (sidebar.classList.contains("active")) {
+                burger.classList.add("hidden");
+            } else {
+                burger.classList.remove("hidden");
+            }
+        }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

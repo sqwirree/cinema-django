@@ -1,0 +1,162 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вхід — Cinema</title>
+    <link rel="stylesheet" href="{% static 'schedule/style.css' %}">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0c0c0c;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            background-image: url('https://www.transparenttextures.com/patterns/dark-mosaic.png');
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            background: rgba(20, 20, 20, 0.95);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffcc00;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        form input[type="email"],
+        form input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #1e1e1e;
+            color: #fff;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #e50914;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #b00610;
+            transform: translateY(-1px);
+        }
+
+        p {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        a {
+            color: #ffcc00;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .error {
+            color: #ff4d4d;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        /* 📱 Телефоны до 600px */
+        @media (max-width: 600px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .container {
+                padding: 24px 18px;
+                border-radius: 10px;
+            }
+
+            h1 {
+                font-size: 24px;
+                margin-bottom: 24px;
+            }
+
+            button {
+                font-size: 15px;
+            }
+        }
+
+        /* Узкие и высокие телефоны (375–420 ширина, 650–920 высота) */
+        @media (min-width: 360px) and (max-width: 430px) and (min-height: 650px) and (max-height: 920px) {
+            body {
+                padding: 28px 14px;
+            }
+
+            .container {
+                max-width: 380px;
+            }
+        }
+
+        /* Планшеты */
+        @media (min-width: 601px) and (max-width: 991px) {
+            body {
+                padding: 50px 40px;
+            }
+
+            .container {
+                max-width: 420px;
+            }
+        }
+
+        /* Десктопы */
+        @media (min-width: 992px) {
+            body {
+                padding: 60px 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Вхід</h1>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            <input type="email" name="email" placeholder="Введіть email" required>
+            <input type="password" name="password" placeholder="Введіть пароль" required>
+            <button type="submit">Увійти</button>
+        </form>
+
+        <p>Немає акаунта? <a href="{% url 'register' %}">Зареєструватися</a></p>
+    </div>
+</body>
+</html>

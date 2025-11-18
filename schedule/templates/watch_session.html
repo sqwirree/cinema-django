@@ -1,0 +1,639 @@
+{# templates/watch_session.html #}
+{% extends 'base.html' %}
+{% block title %}Онлайн перегляд — {{ movie.title }}{% endblock %}
+
+{% block content %}
+<style>
+  /* Загальний фон і заголовки */
+  .watch-wrap {
+    max-width: 1100px;
+    margin: 20px auto 50px;
+    padding: 0 12px;
+  }
+  .watch-title {
+    text-align: center;
+    color: #FFD700;
+    margin: 8px 0 4px;
+  }
+  .watch-subtitle {
+    text-align: center;
+    color: #bfb06a;
+    margin-bottom: 22px;
+  }
+
+  /* Екран кінотеатру */
+  .theater {
+    perspective: 1200px;
+    margin: 0 auto 24px;
+  }
+  .screen-wrap {
+    position: relative;
+    transform: rotateX(7deg);
+    transform-origin: center bottom;
+    margin: 0 auto 24px;
+    max-width: 100%;
+  }
+  .screen-frame {
+    position: relative;
+    background: radial-gradient(120% 85% at 50% 50%,
+                 rgba(255,255,255,0.05) 0%,
+                 rgba(30,30,30,0.95) 100%);
+    border: 10px solid #1a1a1a;
+    border-radius: 16px;
+    box-shadow:
+      0 6px 22px rgba(0,0,0,0.6),
+      0 0 60px rgba(229, 9, 20, 0.15) inset,
+      0 0 120px rgba(255, 215, 0, 0.08) inset;
+    overflow: hidden;
+  }
+  .screen-inner {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 */
+  }
+  .screen-video {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: brightness(0.95) contrast(1.05) saturate(1.02);
+  }
+  .screen-glow {
+    content: "";
+    position: absolute;
+    inset: -10%;
+    pointer-events: none;
+    box-shadow: 0 0 150px rgba(255, 230, 120, 0.18);
+  }
+
+  /* Зона глядачів */
+  .seating-wrap {
+    background: rgba(20,20,20,0.92);
+    border-radius: 16px;
+    padding: 18px 16px 22px;
+    box-shadow: 0 4px 15px rgba(229, 9, 20, 0.2);
+  }
+  .seating-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+    color: #d6d6d6;
+  }
+  .dot { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+  .dot-free   { background: #2b2b2b; border: 1px solid #3b3b3b; }
+  .dot-me     { background: #194d2c; border: 1px solid #2a7a49; }
+  .dot-taken  { background: #4d1919; border: 1px solid #7a2a2a; }
+
+  .seating {
+    display: grid;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  /* Місце — размер */
+  .seat {
+    width: var(--seat-size, 54px);
+    height: var(--seat-size, 54px);
+    border-radius: 10px;
+    background: linear-gradient(180deg, #1b1b1b 0%, #141414 100%);
+    border: 1px solid #2a2a2a;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .seat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.35);
+    border-color: #3b3b3b;
+  }
+  .seat.taken { cursor: not-allowed; }
+  .seat.me    { border-color: #2a7a49; box-shadow: 0 0 0 2px rgba(42,122,73,.25) inset; }
+
+  .seat .avatar {
+    position: absolute;
+    inset: 6px;
+    border-radius: 8px;
+    object-fit: cover;
+    width: calc(100% - 12px);
+    height: calc(100% - 12px);
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.25);
+  }
+  .seat .initials {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    color: #FFD700;
+    opacity: .75;
+    letter-spacing: .3px;
+  }
+
+  /* Нижня панель */
+  .bottom-panel {
+    margin-top: 18px;
+    display: grid;
+    gap: 16px;
+  }
+  .back-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #e50914;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(229, 9, 20, 0.3);
+  }
+  .back-btn:hover {
+    background-color: #ff1a24;
+    box-shadow: 0 6px 15px rgba(255, 26, 36, 0.4);
+  }
+
+  .online-viewers {
+    background: rgba(20,20,20,0.92);
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(229, 9, 20, 0.2);
+  }
+  .viewer-list {
+    display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 8px;
+  }
+  .viewer img {
+    width: 54px; height: 54px; border-radius: 50%; object-fit: cover;
+    box-shadow: 0 0 8px rgba(255,215,0,0.25);
+  }
+  .viewer-name { font-size: 12px; color: #FFD700; text-align: center; margin-top: 4px; }
+
+  /* Кнопка чату */
+  #chat-toggle {
+    position: fixed; bottom: 25px; right: 25px;
+    width: 58px; height: 58px; border-radius: 50%;
+    border: none; background: #e50914; color: white;
+    font-size: 26px; cursor: pointer;
+    box-shadow: 0 4px 14px rgba(229,9,20,0.4);
+    transition: 0.3s; z-index: 2000;
+  }
+  #chat-toggle:hover { transform: translateY(-2px) scale(1.03); }
+
+  /* Сайдбар чату */
+  #chat-sidebar {
+    position: fixed; top: 0; right: -360px;
+    width: 340px; height: 100vh;
+    background: rgba(20,20,20,0.97);
+    box-shadow: -4px 0 16px rgba(0,0,0,0.6);
+    border-left: 2px solid #e50914;
+    display: flex; flex-direction: column;
+    padding: 14px; transition: right 0.4s ease;
+    z-index: 1999;
+  }
+
+  .chat-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:6px;
+  }
+
+  #chat-close {
+    background:transparent;
+    border:none;
+    color:#aaa;
+    font-size:22px;
+    cursor:pointer;
+    padding:2px 8px;
+    border-radius:6px;
+    transition:0.2s;
+  }
+  #chat-close:hover{ color:#fff; background: rgba(229, 9, 20, 0.2); }
+
+  #chat-messages {
+    flex: 1; overflow-y: auto;
+    background: rgba(28,28,28,0.95);
+    border-radius: 10px;
+    padding: 10px; margin-bottom: 10px;
+  }
+  .chat-row { margin: 6px 0; }
+  .chat-head { display:flex; align-items:center; gap:8px; }
+  .chat-head img { width:28px; height:28px; border-radius:50%; }
+  .chat-name { color:#FFD700; font-size:0.9rem; font-weight:700; }
+  .chat-time { font-size:0.75rem; color:#999; margin-left:auto; }
+  .chat-text { margin-left:34px; color:#eee; word-wrap: break-word; white-space: pre-wrap; }
+
+
+  /* Адаптив */
+  @media (max-width:600px) {
+    #chat-sidebar { width:100%; right:-100%; }
+  }
+
+</style>
+
+<div class="watch-wrap">
+  <h1 class="watch-title">🎬 Онлайн перегляд</h1>
+  <h2 class="watch-subtitle">{{ movie.title }}</h2>
+
+  <div class="theater">
+    <div class="screen-wrap">
+      <div class="screen-frame">
+        <div class="screen-inner">
+          {% if movie.video_file %}
+            <video id="movieVideo" class="screen-video" controls autoplay>
+              <source src="{{ movie.video_file.url }}" type="video/mp4">
+              Ваш браузер не підтримує відео.
+            </video>
+          {% else %}
+            <div class="screen-video" style="display:grid;place-items:center;color:#888;">
+              Відео відсутнє
+            </div>
+          {% endif %}
+          <div class="screen-glow"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="seating-wrap">
+      <div class="seating-header">
+        <div class="legend">
+          <span class="dot dot-free"></span> Вільно
+          <span class="dot dot-taken"></span> Зайнято
+          <span class="dot dot-me"></span> Моє місце
+        </div>
+        <div id="gridSize" style="font-size:12px;color:#9a9a9a;"></div>
+      </div>
+      <div id="seating" class="seating" aria-label="Зал"></div>
+    </div>
+
+    <div class="bottom-panel">
+      <div class="online-viewers">
+        <h3 style="text-align:center;color:#FFD700;margin:0 0 8px;">Зараз переглядають</h3>
+        <div id="viewer-list" class="viewer-list">
+          {% for v in online_viewers %}
+            <div class="viewer">
+              <a href="{% url 'profile' v.id %}">
+                <img src="{{ v.avatar.url }}" alt="{{ v.first_name }}">
+              </a>
+              <div class="viewer-name">{{ v.first_name }}</div>
+            </div>
+          {% empty %}
+            <p id="no-viewers" style="color: gray; text-align:center;">Нікого немає онлайн 😢</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div style="text-align:center;">
+        <a href="{% url 'film_description' movie.id %}" class="back-btn">← Назад до фільму</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Кнопка чату ===== -->
+<button id="chat-toggle" title="Чат">💬</button>
+
+<!-- ===== Сайдбар чату ===== -->
+<div id="chat-sidebar">
+  <div class="chat-header">
+    <h3 style="color:#FFD700;margin:0;">💬 Загальний чат</h3>
+    <button id="chat-close">✕</button>
+  </div>
+  <p style="color:#888;text-align:center;font-size:13px;margin-bottom:10px;">
+    Використовуйте <span style="color:#FFD700;">!private Ім’я</span> для особистого повідомлення
+  </p>
+
+  <div id="chat-messages">
+    <p style="color:gray;text-align:center;">Завантаження...</p>
+  </div>
+
+  <div style="display:flex;gap:8px; position:sticky; bottom:18px; z-index:2001;">
+    <input id="chat-input" type="text" placeholder="Введіть повідомлення..." style="
+        flex:1; border:none; border-radius:10px;
+        background:#111; color:#fff; padding:10px;
+    ">
+    <button id="chat-send" style="
+        background:#e50914; border:none; border-radius:10px;
+        padding:10px 12px; color:white; font-weight:600;
+        cursor:pointer; transition:0.3s;
+    ">➤</button>
+  </div>
+</div>
+
+<script>
+  /* === API === */
+  const API = { 
+    seats: "/api/online/seats/", 
+    take: "/api/online/take/", 
+    leave: "/api/online/leave/" 
+  };
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+  }
+  const CSRF = getCookie('csrftoken');
+
+  const seatingEl = document.getElementById('seating');
+  const gridSizeEl = document.getElementById('gridSize');
+
+  function renderSeats(seats) {
+    if (!seats?.length) {
+      seatingEl.innerHTML = '<p style="text-align:center;color:#888;">Немає схеми місць</p>';
+      return;
+    }
+    let maxRow = 0, maxCol = 0;
+    seats.forEach(s => { 
+      maxRow = Math.max(maxRow, s.row); 
+      maxCol = Math.max(maxCol, s.column); 
+    });
+
+    const gap = 6;
+    const containerWidth = seatingEl.clientWidth || seatingEl.parentElement.clientWidth || window.innerWidth - 40;
+    let seatSize = Math.floor((containerWidth - (maxCol - 1) * gap) / maxCol);
+    if (seatSize > 54) seatSize = 54;
+    if (seatSize < 24) seatSize = 24;
+
+    seatingEl.style.setProperty('--seat-size', seatSize + 'px');
+    seatingEl.style.gridTemplateColumns = `repeat(${maxCol}, ${seatSize}px)`;
+    gridSizeEl.textContent = `${maxRow} ряд(ів) × ${maxCol} місц(ь)`;
+
+    seatingEl.innerHTML = '';
+    const map = {};
+    seats.forEach(s => map[`${s.row}-${s.column}`] = s);
+
+    for (let r = 1; r <= maxRow; r++) {
+      for (let c = 1; c <= maxCol; c++) {
+        const s = map[`${r}-${c}`];
+        const seat = document.createElement('div');
+        seat.className = 'seat';
+        seat.dataset.seatId = s?.id ?? '';
+        seat.title = `Ряд ${r}, Місце ${c}`;
+        if (s && s.is_reserved) {
+          seat.classList.add('taken');
+          if (s.is_me) seat.classList.add('me');
+          if (s.avatar_url) {
+            const img = document.createElement('img'); 
+            img.src = s.avatar_url; 
+            img.className = 'avatar';
+            seat.appendChild(img);
+          } else if (s.viewer_name) {
+            const init = document.createElement('div'); 
+            init.className = 'initials';
+            init.textContent = s.viewer_name[0].toUpperCase(); 
+            seat.appendChild(init);
+          }
+        }
+
+        seat.addEventListener('click', async () => {
+          if (!s) return;
+          if (seat.classList.contains('taken') && !seat.classList.contains('me')) return;
+          try {
+            if (seat.classList.contains('me')) {
+              await fetch(API.leave, { 
+                method: 'POST', 
+                headers: { 'X-CSRFToken': CSRF } 
+              });
+            } else {
+              const form = new FormData(); 
+              form.append('seat_id', s.id);
+              const r = await fetch(API.take, { 
+                method: 'POST', 
+                headers: { 'X-CSRFToken': CSRF }, 
+                body: form 
+              });
+              if (r.status === 409) return;
+            }
+            await refreshSeats();
+          } catch (e) { 
+            console.error('Помилка при дії з місцем', e); 
+          }
+        });
+        seatingEl.appendChild(seat);
+      }
+    }
+  }
+
+  async function refreshSeats() {
+    try {
+      const r = await fetch(API.seats);
+      const d = await r.json();
+      if (d.ok) renderSeats(d.seats);
+    } catch (e) { 
+      console.error('Помилка оновлення місць', e); 
+    }
+  }
+
+  async function updateOnlineViewers() {
+    try {
+      const r = await fetch("{% url 'get_online_viewers' %}");
+      const d = await r.json();
+      const container = document.getElementById("viewer-list");
+      container.innerHTML = "";
+      if (!d.viewers.length) {
+        container.innerHTML = '<p style="color: gray; text-align:center;">Нікого немає онлайн 😢</p>';
+        return;
+      }
+      d.viewers.forEach(v => {
+        const div = document.createElement("div");
+        div.classList.add("viewer");
+        div.innerHTML = `
+          <a href="/profile/${v.id}/">
+            <img src="${v.avatar_url}" alt="${v.first_name || 'Глядач'}">
+          </a>
+          <div class="viewer-name">${v.first_name || "Без імені"}</div>
+        `;
+        container.appendChild(div);
+      });
+    } catch (error) { 
+      console.error("Помилка оновлення списку:", error); 
+    }
+  }
+
+  window.addEventListener('resize', () => refreshSeats());
+  refreshSeats(); 
+  updateOnlineViewers();
+  setInterval(refreshSeats, 3000);
+  setInterval(updateOnlineViewers, 5000);
+
+  window.addEventListener("beforeunload", function () {
+    navigator.sendBeacon(API.leave);
+    navigator.sendBeacon("{% url 'set_offline' %}");
+  });
+
+  /* === СИНХРОНІЗАЦІЯ ВІДЕО === */
+  const videoEl = document.getElementById('movieVideo');
+  const GROUP_TIME_URL = "{% url 'get_group_time' movie.id %}";
+
+  async function getGroupTime() {
+    try {
+      const res = await fetch(GROUP_TIME_URL);
+      const data = await res.json();
+      console.log("GROUP TIME RESPONSE:", data); // для дебага
+      if (data.ok) {
+        return data.position; // секунди
+      }
+    } catch (e) {
+      console.error('Помилка отримання групового часу', e);
+    }
+    return null;
+  }
+
+  async function syncVideoToGroup(forcePlay = false) {
+    if (!videoEl) return;
+    const pos = await getGroupTime();
+    if (pos == null) return;
+
+    const wasPaused = videoEl.paused;
+
+    try {
+      videoEl.currentTime = pos;
+    } catch (e) {
+      console.warn('Не вдалося встановити currentTime', e);
+    }
+
+    if (forcePlay || !wasPaused) {
+      videoEl.play().catch(() => {});
+    }
+  }
+
+  if (videoEl) {
+    // При завантаженні метаданих — одразу підтягуємося до групи
+    videoEl.addEventListener('loadedmetadata', () => {
+      syncVideoToGroup(true);
+    });
+
+    // Коли юзер натискає play — його переносить до поточного групового часу
+    videoEl.addEventListener('play', () => {
+      syncVideoToGroup(true);
+    });
+
+    // Заборона перемотки вперед, але назад можна
+    videoEl.addEventListener('seeking', async () => {
+      const desired = videoEl.currentTime;
+      const groupTime = await getGroupTime();
+      if (groupTime == null) return;
+
+      // Якщо ліземо вперед — повертаємо назад до групи
+      if (desired > groupTime + 0.5) {
+        videoEl.currentTime = groupTime;
+        // Можна показати підказку, якщо хочеш
+        // alert("Неможливо перемотати вперед, тільки назад 🙂");
+      }
+    });
+
+    // ⚠️ Ніякого setInterval для примусової синхронізації тут немає,
+    // щоб відео не скакало кожні кілька секунд.
+  }
+
+  /* === ЧАТ === */
+  const chatBtn = document.getElementById('chat-toggle');
+  const chatSidebar = document.getElementById('chat-sidebar');
+  const chatInput = document.getElementById('chat-input');
+  const chatSend = document.getElementById('chat-send');
+  const chatMessages = document.getElementById('chat-messages');
+  const chatClose = document.getElementById('chat-close');
+  let chatOpen = false;
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, m => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[m]));
+  }
+
+  async function loadChat() {
+    try {
+      const res = await fetch('/chat/global/get/');
+      const data = await res.json();
+      if (!data.ok) return;
+
+      chatMessages.innerHTML = '';
+      data.messages.forEach(m => {
+        const row = document.createElement('div');
+        row.className = 'chat-row';
+        const priv = m.is_private ? ' <span style="color:#e50914;font-size:0.8rem;">(особисте)</span>' : '';
+        const receiver = m.is_private && m.receiver ? ` → ${m.receiver}` : '';
+        row.innerHTML = `
+          <div class="chat-head">
+            <img src="${m.avatar}" alt="">
+            <span class="chat-name">${escapeHtml(m.sender)}${receiver}</span>
+            ${priv}
+            <span class="chat-time">${escapeHtml(m.time)}</span>
+          </div>
+          <div class="chat-text">${escapeHtml(m.text)}</div>
+        `;
+        chatMessages.appendChild(row);
+      });
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    } catch (err) {
+      console.error('Помилка завантаження чату:', err);
+    }
+  }
+
+  async function sendMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    try {
+      const form = new FormData();
+      form.append('text', text);
+      const res = await fetch('/chat/global/send/', {
+        method: 'POST', 
+        headers: { 'X-CSRFToken': CSRF }, 
+        body: form
+      });
+      const data = await res.json();
+      if (data.ok) {
+        chatInput.value = '';
+        loadChat();
+      }
+    } catch (err) { 
+      console.error('Помилка надсилання:', err); 
+    }
+  }
+
+  chatSend.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keydown', e => { 
+    if (e.key === 'Enter') sendMessage(); 
+  });
+
+  /* Відкриття чату */
+  chatBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    chatOpen = true;
+    chatSidebar.style.right = '0';
+    chatBtn.style.display = 'none';
+  });
+
+  /* Закриття кліком поза чатом */
+  document.addEventListener('click', e => {
+    if (chatOpen && !chatSidebar.contains(e.target)) closeChat();
+  });
+
+  /* Закриття хрестиком */
+  chatClose.addEventListener('click', e => {
+    e.stopPropagation();
+    closeChat();
+  });
+
+  function closeChat() {
+    const width = chatSidebar.offsetWidth || 360;
+    chatSidebar.style.right = `-${width}px`;
+    chatBtn.style.display = 'block';
+    chatOpen = false;
+  }
+
+  setInterval(loadChat, 4000);
+  loadChat();
+</script>
+
+
+{% endblock %}

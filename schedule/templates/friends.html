@@ -1,0 +1,419 @@
+{% extends 'base.html' %}
+{% block title %}Друзі{% endblock %}
+
+{% block extra_css %}
+<style>
+.friends-page {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* ЛЕВАЯ КОЛОНКА */
+.friends-left {
+    background: rgba(20,20,20,0.95);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 4px 15px rgba(229,9,20,0.25);
+}
+.section-title {
+    color: #FFD700;
+    margin: 6px 0 10px;
+    font-weight: 600;
+}
+.friend-item, .request-item, .outgoing-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(28,28,28,0.95);
+    margin-bottom: 8px;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.25s ease;
+}
+.friend-item:hover, .request-item:hover, .outgoing-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.25);
+}
+.friend-item a {
+    color: #fff;
+    text-decoration: none;
+    flex: 1;
+}
+.req-actions form { display: inline; }
+.req-btn {
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+.req-accept { background: #1f9d55; color: #fff; }
+.req-reject { background: #8d99ae; color: #111; }
+.req-cancel { background: #e09f3e; color: #111; }
+.avatar-24 {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 8px rgba(229,9,20,0.25);
+}
+.unread-badge {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    background: #e50914;
+    color: #fff;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    display: none;
+    min-width: 22px;
+    text-align: center;
+}
+
+/* ПРАВАЯ КОЛОНКА (ЧАТ) */
+.friends-right {
+    background: rgba(20,20,20,0.95);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 4px 15px rgba(229,9,20,0.25);
+    min-height: 420px;
+}
+.chat-header {
+    color: #FFD700;
+    margin-bottom: 10px;
+}
+.chat-window {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    height: 340px;
+    background: rgba(28,28,28,0.95);
+    border-radius: 10px;
+    padding: 10px;
+}
+.chat-input {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+.chat-input input[type="text"]{
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    background: #111;
+    color: #fff;
+}
+.chat-input button{
+    border: none;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #e50914;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.chat-input button:hover {
+    background: #ff1a24;
+    transform: scale(1.05);
+}
+.list-small {
+    font-size: 0.95rem;
+    color: #ddd;
+}
+.hr-line {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    margin: 12px 0;
+}
+
+/* СООБЩЕНИЯ В ЧАТЕ */
+.msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 80%;
+    padding: 8px 12px;
+    margin: 6px 0;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    position: relative;
+}
+.msg.me {
+    background: #e50914;
+    color: #fff;
+    align-self: flex-end;
+    border-bottom-right-radius: 0;
+}
+.msg.friend {
+    background: rgba(255,255,255,0.1);
+    align-self: flex-start;
+    border-bottom-left-radius: 0;
+}
+.msg-time {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-top: 3px;
+    align-self: flex-end;
+}
+
+/* ─────────── 📱 АДАПТИВ ─────────── */
+
+/* Телефоны */
+@media (max-width: 600px) {
+    .friends-page {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+        gap: 12px;
+    }
+
+    .friends-left,
+    .friends-right {
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .friends-right {
+        margin-top: 4px;
+        min-height: 360px;
+    }
+
+    .friend-item,
+    .request-item,
+    .outgoing-item {
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .avatar-24 {
+        width: 28px;
+        height: 28px;
+    }
+
+    .req-btn {
+        padding: 5px 8px;
+        font-size: 0.8rem;
+    }
+
+    .chat-window {
+        height: 260px;
+        padding: 8px;
+    }
+
+    .chat-input input[type="text"] {
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+
+    .chat-input button {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+    }
+
+    .section-title {
+        font-size: 1rem;
+    }
+}
+
+/* Планшеты */
+@media (min-width: 601px) && (max-width: 991px) {
+    .friends-page {
+        grid-template-columns: 1fr;
+        max-width: 90%;
+    }
+
+    .friends-right {
+        margin-top: 8px;
+    }
+
+    .chat-window {
+        height: 300px;
+    }
+}
+
+/* Десктопы */
+@media (min-width: 992px) {
+    .friends-page {
+        grid-template-columns: 320px 1fr;
+        max-width: 1100px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="friends-page">
+    <div class="friends-left">
+        <h2 class="section-title">👥 Мої друзі</h2>
+        {% if friends %}
+            <div class="list-small">
+                {% for f in friends %}
+                <div class="friend-item" data-friend-id="{{ f.id }}">
+                    {% if f.avatar %}
+                        <img class="avatar-24" src="{{ f.avatar.url }}" alt="">
+                    {% else %}
+                        <img class="avatar-24" src="{{ MEDIA_URL }}profile_images/standart_avatar.png" alt="">
+                    {% endif %}
+                    <a href="{% url 'friends' %}?open={{ f.id }}">
+                        {{ f.first_name }} {{ f.last_name }}
+                    </a>
+                    <span class="unread-badge">0</span>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="list-small">Поки що немає друзів.</p>
+        {% endif %}
+
+        <hr class="hr-line">
+
+        <h3 class="section-title">📩 Запити в друзі</h3>
+        {% if incoming %}
+            {% for fr in incoming %}
+            <div class="request-item">
+                <img class="avatar-24" src="{{ fr.from_viewer.avatar.url }}" alt="">
+                <div style="flex:1;">
+                    {{ fr.from_viewer.first_name }} {{ fr.from_viewer.last_name }}
+                </div>
+                <div class="req-actions">
+                    <form action="{% url 'accept_friend_request' fr.id %}" method="post">
+                        {% csrf_token %}
+                        <button class="req-btn req-accept" type="submit">Прийняти</button>
+                    </form>
+                    <form action="{% url 'reject_friend_request' fr.id %}" method="post">
+                        {% csrf_token %}
+                        <button class="req-btn req-reject" type="submit">Відхилити</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="list-small">Немає вхідних запитів.</p>
+        {% endif %}
+
+        <hr class="hr-line">
+
+        <h3 class="section-title">⏳ Мої вихідні</h3>
+        {% if outgoing %}
+            {% for fr in outgoing %}
+            <div class="outgoing-item">
+                <img class="avatar-24" src="{{ fr.to_viewer.avatar.url }}" alt="">
+                <div style="flex:1;">
+                    {{ fr.to_viewer.first_name }} {{ fr.to_viewer.last_name }}
+                </div>
+                <form action="{% url 'cancel_friend_request' fr.id %}" method="post">
+                    {% csrf_token %}
+                    <button class="req-btn req-cancel" type="submit">Скасувати</button>
+                </form>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="list-small">Немає вихідних запитів.</p>
+        {% endif %}
+    </div>
+
+    <div class="friends-right">
+        {% if active_friend %}
+            <div class="chat-header">💬 Чат з {{ active_friend.first_name }} {{ active_friend.last_name }}</div>
+
+            <div id="chat-window" class="chat-window">
+                <p style="color:#aaa;text-align:center;">Завантаження повідомлень...</p>
+            </div>
+
+            <div class="chat-input">
+                <input id="chat-input-text" type="text" placeholder="Введіть повідомлення...">
+                <button id="chat-send-btn">Надіслати</button>
+            </div>
+
+            <script>
+            const friendId = {{ active_friend.id }};
+            const chatWindow = document.getElementById('chat-window');
+            const chatInput = document.getElementById('chat-input-text');
+            const chatBtn = document.getElementById('chat-send-btn');
+
+            async function loadMessages() {
+                try {
+                    const response = await fetch(`/chat/${friendId}/get/`);
+                    const data = await response.json();
+                    if (!data.ok) return;
+                    chatWindow.innerHTML = '';
+                    data.messages.forEach(msg => {
+                        const div = document.createElement('div');
+                        div.className = msg.is_me ? 'msg me' : 'msg friend';
+                        div.innerHTML = `
+                            <span class="msg-text">${msg.text}</span>
+                            <span class="msg-time">${msg.time}</span>
+                        `;
+                        chatWindow.appendChild(div);
+                    });
+                    chatWindow.scrollTop = chatWindow.scrollHeight;
+                    updateUnreadBadges();
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            async function sendMessage() {
+                const text = chatInput.value.trim();
+                if (!text) return;
+                const formData = new FormData();
+                formData.append('text', text);
+                await fetch(`/chat/${friendId}/send/`, {
+                    method: 'POST',
+                    headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                    body: formData
+                });
+                chatInput.value = '';
+                loadMessages();
+            }
+
+            chatBtn.addEventListener('click', sendMessage);
+            chatInput.addEventListener('keydown', e => {
+                if (e.key === 'Enter') sendMessage();
+            });
+
+            setInterval(loadMessages, 4000);
+            loadMessages();
+
+            async function updateUnreadBadges() {
+                try {
+                    const res = await fetch('/chat/unread/');
+                    const data = await res.json();
+                    if (!data.ok) return;
+
+                    document.querySelectorAll('.friend-item').forEach(el => {
+                        const fid = el.dataset.friendId;
+                        const badge = el.querySelector('.unread-badge');
+                        const count = data.unread[fid] || 0;
+                        if (count > 0) {
+                            badge.textContent = count > 99 ? '99+' : count;
+                            badge.style.display = 'inline';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    });
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+
+            setInterval(updateUnreadBadges, 5000);
+            updateUnreadBadges();
+            </script>
+        {% else %}
+            <div class="chat-header">💬 Відкрийте чат</div>
+            <div class="chat-window">
+                <p class="list-small">Виберіть друга ліворуч, щоб почати переписку.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

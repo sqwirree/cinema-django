@@ -1,0 +1,531 @@
+{% extends 'base.html' %}
+{% block title %}{{ movie.title }} — Опис{% endblock %}
+{% block content %}
+<style>
+/* Фон и базовая typографика только для этой страницы */
+body {
+  background: radial-gradient(circle at center, #000, #0b0b0b);
+  background-image: url('https://www.transparenttextures.com/patterns/dark-mosaic.png');
+  background-color: #0b0b0b;
+  color: #fff;
+  font-family: 'Poppins', sans-serif;
+  min-height: 100vh;
+  padding: 40px 15px;
+  margin: 0;
+}
+
+/* 🎞 Основний контейнер */
+.container {
+  max-width: 920px;
+  margin: auto;
+  background: rgba(18, 18, 18, 0.95);
+  padding: 45px;
+  border-radius: 20px;
+  box-shadow:
+    0 0 40px rgba(229, 9, 20, 0.15),
+    0 0 25px rgba(255, 215, 0, 0.05),
+    inset 0 0 20px rgba(255,255,255,0.02);
+  backdrop-filter: blur(6px);
+  transition: transform 0.3s ease;
+}
+.container:hover {
+  transform: translateY(-3px);
+}
+
+/* 🎬 Заголовки */
+h1, h2, h3 {
+  font-weight: 600;
+  margin: 0 0 10px;
+  letter-spacing: 0.5px;
+}
+h1 {
+  color: #FFD700;
+  font-size: 2.4rem;
+  text-shadow: 0 0 10px rgba(255,215,0,0.5);
+}
+h2 {
+  color: #ff5555;
+  text-shadow: 0 0 10px rgba(229,9,20,0.3);
+}
+h3 {
+  color: #FFD700;
+  text-shadow: 0 0 6px rgba(255,215,0,0.4);
+}
+
+/* 📸 Шапка фільму */
+.movie-header {
+  display: flex;
+  gap: 25px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.movie-header img {
+  width: 240px;
+  border-radius: 14px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.8);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.movie-header img:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 35px rgba(255,215,0,0.25);
+}
+
+/* 📜 Опис */
+.description {
+  margin-top: 25px;
+  font-size: 1.05rem;
+  color: #ddd;
+}
+.description p {
+  text-align: justify;
+  text-shadow: 0 0 5px rgba(255,255,255,0.04);
+}
+
+/* ▶️ Відео */
+video {
+  width: 100%;
+  border-radius: 10px;
+  margin-top: 14px;
+  box-shadow: 0 0 22px rgba(229,9,20,0.25);
+  transition: box-shadow 0.3s ease;
+}
+video:hover {
+  box-shadow: 0 0 35px rgba(255,215,0,0.25);
+}
+
+/* 🔘 Кнопки */
+.buttons {
+  margin-top: 35px;
+  text-align: center;
+}
+.buttons a,
+.buttons span {
+  display: inline-block;
+  margin: 10px;
+  padding: 14px 26px;
+  border-radius: 10px;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 1.05rem;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+.session-btn {
+  background: linear-gradient(90deg, #e50914, #ff3939);
+  color: #fff;
+  box-shadow: 0 0 15px rgba(229,9,20,0.35);
+}
+.session-btn:hover {
+  background: linear-gradient(90deg, #ff1a24, #ff6a4a);
+  box-shadow: 0 0 25px rgba(255,70,70,0.5);
+}
+.online-btn {
+  background: linear-gradient(90deg, #FFD700, #ffec7f);
+  color: #000;
+  box-shadow: 0 0 15px rgba(255,215,0,0.4);
+}
+.online-btn:hover {
+  background: linear-gradient(90deg, #ffe14a, #fff3a6);
+  box-shadow: 0 0 25px rgba(255,215,0,0.6);
+}
+.online-btn.disabled {
+  background: #555;
+  color: #ddd;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* 📊 Блок взаємодії */
+.interaction {
+  margin-top: 35px;
+  background: rgba(30, 30, 30, 0.9);
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 0 12px rgba(255,255,255,0.05);
+}
+.interaction h3 {
+  color: #FFD700;
+  margin-bottom: 10px;
+}
+.interaction-row {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+/* ⭐ Зірки */
+.stars {
+  display: inline-flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.star {
+  font-size: 30px;
+  color: #555;
+  cursor: pointer;
+  transition: transform 0.2s ease, color 0.2s ease;
+  background: none;
+  border: none;
+  padding: 0;
+  outline: none;
+}
+.star.active {
+  color: #FFD700;
+  text-shadow: 0 0 10px rgba(255,215,0,0.5);
+}
+.star:hover {
+  transform: scale(1.25);
+  color: #ffec80;
+}
+
+/* 💥 Анімація вибуху */
+@keyframes starExplode {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: translateY(80px) scale(0.2) rotate(180deg); }
+}
+.star.explode { animation: starExplode 0.6s ease forwards; }
+
+/* 💫 Частинки вибуху */
+@keyframes particleFall {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+}
+.particle {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  background: #FFD700;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.9;
+  animation: particleFall 0.8s ease-out forwards;
+}
+
+/* 📈 Рейтинг */
+.avg-rating {
+  margin-top: 15px;
+  font-size: 1.05rem;
+}
+.avg-rating span {
+  color: #FFD700;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(255,215,0,0.3);
+}
+
+/* 🔖 Селект */
+select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #fff;
+  font-size: 1rem;
+  transition: border 0.3s ease, background 0.3s ease;
+}
+select:hover,
+select:focus {
+  border-color: #FFD700;
+  background: #222;
+}
+
+/* 🧾 Toast */
+.toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  background: rgba(25,25,25,0.95);
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.6);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.3s ease;
+  z-index: 9999;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.ok { border-left: 4px solid #39d353; }
+.toast.err { border-left: 4px solid #e50914; }
+
+/* 🔙 Кнопка "Назад" */
+.back {
+  display: inline-block;
+  margin-top: 40px;
+  color: #aaa;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+.back:hover {
+  color: #FFD700;
+  text-shadow: 0 0 6px rgba(255,215,0,0.5);
+}
+
+/* ─────────────────────────
+   📱 АДАПТИВ
+   ───────────────────────── */
+
+/* Телефоны до 600px */
+@media (max-width: 600px) {
+  body {
+    padding: 20px 10px;
+  }
+
+  .container {
+    padding: 24px 16px;
+    max-width: 100%;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  .movie-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .movie-header img {
+    width: 70vw;
+    max-width: 260px;
+  }
+
+  .description {
+    font-size: 1rem;
+  }
+
+  .interaction {
+    padding: 18px;
+  }
+
+  .interaction-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .buttons a,
+  .buttons span {
+    display: block;
+    width: 100%;
+    max-width: 280px;
+    margin: 8px auto;
+  }
+
+  .back {
+    margin-top: 30px;
+  }
+}
+
+/* Узкие и высокие телефоны (375–420 ширина, 650–920 высота) */
+@media (min-width: 360px) and (max-width: 430px) and (min-height: 650px) and (max-height: 920px) {
+  .container {
+    padding: 26px 18px;
+  }
+}
+
+/* Планшеты */
+@media (min-width: 601px) and (max-width: 991px) {
+  body {
+    padding: 30px 16px;
+  }
+
+  .container {
+    max-width: 95%;
+    padding: 32px;
+  }
+}
+
+/* Десктопы */
+@media (min-width: 992px) {
+  body {
+    padding: 40px 20px;
+  }
+
+  .container {
+    max-width: 920px;
+  }
+}
+</style>
+
+<div class="container">
+  <div class="movie-header">
+    {% if movie.image %}
+      <img src="{{ movie.image.url }}" alt="{{ movie.title }}">
+    {% endif %}
+    <div>
+      <h1>{{ movie.title }}</h1>
+      <p><strong>Жанри:</strong>
+        {% for genre in movie.genres.all %}
+          {{ genre.name }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      </p>
+      <p><strong>Рік:</strong> {{ movie.release_year }}</p>
+    </div>
+  </div>
+
+  <div class="description">
+    <h2>Опис</h2>
+    <p>{{ movie.full_description }}</p>
+  </div>
+
+  <div class="avg-rating">
+    ⭐ Середня оцінка:
+    <span id="avgRatingText">{{ avg_rating|default:"Немає оцінок" }}</span>
+  </div>
+
+  {% if user.is_authenticated %}
+  <div class="interaction" id="interactionBox" data-movie-id="{{ movie.id }}">
+    <h3>📌 Закладки та оцінка</h3>
+    <div class="interaction-row">
+      <div>
+        <div class="stars" id="stars">
+          {% for i in "1234567891" %}
+            {% with n=forloop.counter %}
+              <button type="button" class="star {% if rating and rating.score|default:0 >= n %}active{% else %}inactive{% endif %}" data-value="{{ n }}">★</button>
+            {% endwith %}
+          {% endfor %}
+        </div>
+        <span class="rating-text" id="myRatingText">
+          {% if rating %}Ваша оцінка: {{ rating.score }}/10{% else %}Оцініть фільм{% endif %}
+        </span>
+      </div>
+      <div>
+        <form id="bookmarkForm" action="{% url 'add_bookmark' movie.id %}" method="post">
+          {% csrf_token %}
+          <label for="status">Закладка:</label>
+          <select name="status" id="status">
+            {% for key, label in Bookmark.STATUS_CHOICES %}
+              <option value="{{ key }}" {% if bookmark and bookmark.status == key %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if movie.has_trailer and movie.trailer_file %}
+  <div class="trailer">
+    <h2>🎞 Трейлер</h2>
+    <video id="trailerVideo" controls>
+      <source src="{{ movie.trailer_file.url }}" type="video/mp4">
+    </video>
+  </div>
+  {% endif %}
+
+  <div class="buttons">
+    {% if first_session %}
+      <a href="{% url 'session_list' movie.id %}" class="session-btn">🎬 Обрати сеанс</a>
+    {% else %}
+      <span class="online-btn disabled">🚫 Немає сеансів</span>
+    {% endif %}
+    {% if movie.has_online_viewing and movie.video_file %}
+      {% if activity and activity.watched_movie %}
+        <a href="{% url 'watch_session' movie.id %}" class="online-btn">▶️ Дивитися онлайн</a>
+      {% else %}
+        <a href="{% url 'confirm_online' movie.id %}" class="online-btn">💻 Перегляд онлайн</a>
+      {% endif %}
+    {% else %}
+      <span class="online-btn.disabled">🚫 Онлайн недоступний</span>
+    {% endif %}
+  </div>
+
+  <a href="{% url 'movie_list' %}" class="back">← Назад до списку фільмів</a>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  const csrftoken = document.cookie.split('; ').find(r=>r.startsWith('csrftoken='))?.split('=')[1];
+  const starsEl = document.getElementById('stars');
+  const myRatingText = document.getElementById('myRatingText');
+  const avgRatingText = document.getElementById('avgRatingText');
+
+  function showToast(text, ok=true) {
+    const t = document.getElementById('toast');
+    t.textContent = text;
+    t.className = 'toast ' + (ok ? 'ok' : 'err') + ' show';
+    setTimeout(() => { t.classList.remove('show'); }, 1600);
+  }
+
+  function setStars(score) {
+    starsEl.querySelectorAll('.star').forEach(btn => {
+      const v = Number(btn.dataset.value);
+      btn.classList.toggle('active', v <= score);
+    });
+  }
+
+  starsEl.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.star');
+    if (!btn) return;
+    const newScore = Number(btn.dataset.value);
+    const currentScore = [...starsEl.querySelectorAll('.star.active')].length;
+    const stars = [...starsEl.querySelectorAll('.star')];
+
+    // 🌠 Приліт зірок зверху
+    if (newScore > currentScore) {
+      stars.forEach((star, i) => {
+        if (i + 1 <= newScore && i + 1 > currentScore) {
+          const rect = star.getBoundingClientRect();
+          const clone = document.createElement('span');
+          clone.textContent = '★';
+          clone.style.position = 'fixed';
+          clone.style.left = `${Math.random()*window.innerWidth}px`;
+          clone.style.top = `${-150 - Math.random()*200}px`;
+          clone.style.color = '#FFD700';
+          clone.style.fontSize = '30px';
+          clone.style.transition = 'all 1s ease-out';
+          clone.style.zIndex = 9999;
+          document.body.appendChild(clone);
+          setTimeout(() => {
+            clone.style.left = `${rect.left + rect.width/2}px`;
+            clone.style.top = `${rect.top}px`;
+            clone.style.transform = 'scale(0.8) rotate(360deg)';
+            clone.style.opacity = '0';
+          }, 50);
+          setTimeout(()=>clone.remove(),1200);
+        }
+      });
+    }
+
+    // 💥 Вибух зірок
+    if (newScore < currentScore) {
+      stars.forEach((star, i) => {
+        if (i + 1 > newScore && i + 1 <= currentScore) {
+          const rect = star.getBoundingClientRect();
+          for (let j = 0; j < 8; j++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = `${rect.left + rect.width/2}px`;
+            p.style.top = `${rect.top + rect.height/2}px`;
+            p.style.setProperty('--dx', `${(Math.random()-0.5)*120}px`);
+            p.style.setProperty('--dy', `${80 + Math.random()*60}px`);
+            document.body.appendChild(p);
+            setTimeout(()=>p.remove(),800);
+          }
+          star.classList.add('explode');
+          setTimeout(()=>star.classList.remove('explode'),600);
+        }
+      });
+    }
+
+    // 🔄 Відправка запиту
+    const resp = await fetch(`{% url 'rate_movie' movie.id %}`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' },
+      body: new URLSearchParams({ score: newScore })
+    }).catch(() => null);
+    const data = await resp?.json().catch(() => null);
+    if (data?.ok) {
+      setStars(newScore);
+      myRatingText.textContent = `Ваша оцінка: ${data.score}/10`;
+      avgRatingText.textContent = data.avg_rating ?? 'Немає оцінок';
+      showToast('Оцінку збережено');
+    }
+  });
+})();
+</script>
+{% endblock %}

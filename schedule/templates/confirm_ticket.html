@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+{% block title %}Підтвердження покупки{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Обёртка всей страницы подтверждения */
+.confirm-page {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+/* 💰 Гаманець */
+.wallet-info {
+  position: fixed;
+  top: 20px;
+  right: 25px;
+  background: rgba(25, 25, 25, 0.92);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 12px;
+  padding: 12px 20px;
+  z-index: 1000;
+  box-shadow: 0 0 15px rgba(229, 9, 20, 0.4);
+  color: #fff;
+  font-size: 0.95rem;
+  backdrop-filter: blur(6px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.4s ease;
+  opacity: 0;
+  animation: fadeIn 0.8s ease forwards;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.wallet-info:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+.wallet-info p {
+  margin: 0 0 6px;
+  color: #FFD700;
+  font-weight: 600;
+  text-shadow: 0 0 5px rgba(255, 215, 0, 0.4);
+}
+.btn-wallet {
+  display: inline-block;
+  background: #e50914;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.3);
+}
+.btn-wallet:hover {
+  background: #ff1a24;
+  transform: scale(1.05);
+}
+
+/* 🎟 Основний блок */
+.confirm-container {
+  max-width: 600px;
+  width: 100%;
+  margin: 120px auto 0 auto;
+  background: rgba(20,20,20,0.93);
+  padding: 40px;
+  border-radius: 18px;
+  box-shadow: 0 0 25px rgba(229,9,20,0.35);
+  text-align: center;
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.8s ease;
+}
+.confirm-container h1 {
+  color: #FFD700;
+  margin-bottom: 25px;
+  text-shadow: 0 0 12px rgba(255,215,0,0.4);
+  font-size: 2rem;
+}
+.confirm-container p {
+  font-size: 1.05rem;
+  margin: 8px 0;
+}
+.confirm-container strong {
+  color: #FFD700;
+}
+.confirm-btn {
+  margin-top: 25px;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(90deg,#e50914,#ff4545);
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+.confirm-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 18px rgba(229,9,20,0.6);
+}
+.back-link {
+  display: block;
+  margin-top: 25px;
+  color: #FFD700;
+  text-decoration: none;
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
+.back-link:hover {
+  color: #fff;
+}
+
+/* ───────────── 📱 Адаптив ───────────── */
+
+/* Телефоны */
+@media (max-width: 600px) {
+  .confirm-page {
+    padding-top: 20px;
+    padding-bottom: 30px;
+  }
+
+  .wallet-info {
+    position: static;           /* перестаёт быть фиксированным */
+    margin: 0 auto 15px auto;
+    width: 100%;
+    max-width: 360px;
+    font-size: 0.9rem;
+  }
+
+  .confirm-container {
+    margin: 10px auto 0 auto;
+    padding: 24px 16px;
+    max-width: 100%;
+    border-radius: 14px;
+  }
+
+  .confirm-container h1 {
+    font-size: 1.6rem;
+    margin-bottom: 18px;
+  }
+
+  .confirm-container p {
+    font-size: 0.95rem;
+  }
+
+  .confirm-btn {
+    width: 100%;
+    max-width: 260px;
+  }
+}
+
+/* Планшеты */
+@media (min-width: 601px) and (max-width: 991px) {
+  .confirm-page {
+    padding-top: 30px;
+    padding-bottom: 40px;
+  }
+
+  .wallet-info {
+    right: 20px;
+    top: 18px;
+    font-size: 0.9rem;
+  }
+
+  .confirm-container {
+    margin: 90px auto 0 auto;
+    max-width: 520px;
+    padding: 32px 26px;
+  }
+}
+
+/* Десктопы */
+@media (min-width: 992px) {
+  .confirm-page {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+
+  .confirm-container {
+    max-width: 620px;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="confirm-page">
+  <div class="wallet-info">
+    <p>💰 Баланс: <strong>{{ viewer.wallet.balance }}₴</strong></p>
+    <a href="{% url 'wallet' %}" class="btn-wallet">Перейти в гаманець</a>
+  </div>
+
+  <div class="confirm-container">
+    <h1>Підтвердження покупки</h1>
+    <p>🎬 Фільм: <strong>{{ movie.title }}</strong></p>
+    <p>📍 Ряд: <strong>{{ seat.row }}</strong> | Місце: <strong>{{ seat.column }}</strong></p>
+    <p>💰 Ціна: <strong>{{ session.price }}₴</strong></p>
+
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="confirm-btn">✅ Підтвердити покупку</button>
+    </form>
+
+    <a href="{% url 'seat_selection' session.id %}" class="back-link">← Назад</a>
+  </div>
+</div>
+{% endblock %}
